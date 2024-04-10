@@ -1,9 +1,7 @@
 import 'dart:developer';
 
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:local_auth/local_auth.dart';
 import 'package:memo/memo/memo.dart';
 import 'package:memo/notifier.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -68,24 +66,6 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
   }
 
   @override
-  Widget build(BuildContext context) {
-    return DefaultTabController(
-      length: 2,
-      child: GestureDetector(
-        onTap: () {
-          FocusScope.of(context).unfocus();
-        },
-        child: AppPage()
-      )
-    );
-  }
-}
-
-class AppPage extends ConsumerWidget {
-  final LocalAuthentication auth = LocalAuthentication();
-  bool isNeededAuth = true;
-
-  @override
   Future<void> didChangeAppLifecycleState(AppLifecycleState state) async {
     log(state.name);
     switch (state) {
@@ -94,7 +74,6 @@ class AppPage extends ConsumerWidget {
         if (_controller.value.text.isNotEmpty) {
           await prefs.setString('stored', _controller.value.text);
         }
-        isNeededAuth = true;
         break;
       case AppLifecycleState.paused:
         break;
@@ -108,10 +87,27 @@ class AppPage extends ConsumerWidget {
   }
 
   @override
+  Widget build(BuildContext context) {
+    return DefaultTabController(
+      length: 2,
+      child: GestureDetector(
+        onTap: () {
+          FocusScope.of(context).unfocus();
+        },
+        child: const AppPage()
+      )
+    );
+  }
+}
+
+class AppPage extends ConsumerWidget {
+  const AppPage({super.key});
+
+  @override
   Widget build(BuildContext context, WidgetRef ref) {
     return Scaffold(
         appBar: AppBar(
-          title: Text(''),
+          title: const Text('Meemo'),
           bottom: const TabBar(
             tabs: [
               Tab(icon: Icon(Icons.textsms)),
@@ -194,42 +190,55 @@ class ListUpPage extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final list = ref.watch(memoNotifier);
+    final reversedList = ref.watch(memoNotifier).reversed;
     return FutureBuilder(
         future: _wait(),
         builder: (context, snapshot) {
       return ListView.builder(
-          itemCount: list.length,
+          itemCount: reversedList.length,
           itemBuilder: (context, index) {
-            return Column(
-                children: [
-                  Padding(
-                    padding: const EdgeInsets.symmetric(
-                        vertical: 20.0, horizontal: 50.0),
-                    child: Text(list.reversed.elementAt(index).text),
-                  ),
-                  const Divider(),
-                ]
+            return GestureDetector(
+                child: Column(
+                  children: [
+                    Padding(
+                      padding: const EdgeInsets.symmetric(
+                          vertical: 20.0, horizontal: 50.0),
+                      child: Text(reversedList.elementAt(index).text),
+                    ),
+                    const Divider(),
+                  ]
+                ),
+                onTap: () {
+                  Navigator.of(context).push(
+                      MaterialPageRoute(builder: (context)
+                        => DetailPage(memo: reversedList.elementAt(index))
+                  ));
+                },
             );
           },
+          
       );
     });
   }
 }
 
 class DetailPage extends ConsumerWidget {
-  final List<String> details;
-  DetailPage({super.key, required this.details});
+  final Memo memo;
+  const DetailPage({super.key, required this.memo});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    return Center(
-      child: ListView.builder(
-          itemCount: details.length,
-          itemBuilder: (context, index) {
-            Text(details.elementAt(index));
-          }
+    return Scaffold(
+      appBar: AppBar(
       ),
+      body: ListView(
+        children: memo.toMap().entries.map((e) =>
+              Padding(
+                padding: const EdgeInsets.symmetric(vertical: 15.0, horizontal: 30.0),
+                child: Text('${e.key}: ${e.value}'),
+              )
+            ).toList(),
+        ),
     );
   }
 }
