@@ -94,33 +94,23 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
         onTap: () {
           FocusScope.of(context).unfocus();
         },
-        child: const AppPage()
+        child: Scaffold(
+            appBar: AppBar(
+              title: const Text('Meemo'),
+              bottom: const TabBar(
+                tabs: [
+                  Tab(icon: Icon(Icons.textsms)),
+                  Tab(icon: Icon(Icons.list)),
+                ],
+              ),
+            ),
+            body: const TabBarView(
+              children: [WriterPage(), ListUpPage()],
+            )
+        )
       )
     );
   }
-}
-
-class AppPage extends ConsumerWidget {
-  const AppPage({super.key});
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    return Scaffold(
-        appBar: AppBar(
-          title: const Text('Meemo'),
-          bottom: const TabBar(
-            tabs: [
-              Tab(icon: Icon(Icons.textsms)),
-              Tab(icon: Icon(Icons.list)),
-            ],
-          ),
-        ),
-        body: const TabBarView(
-            children: [WriterPage(), ListUpPage()],
-        )
-    );
-  }
-
 }
 
 class WriterPage extends ConsumerWidget {
@@ -129,7 +119,7 @@ class WriterPage extends ConsumerWidget {
   const WriterPage({super.key});
 
   Memo _makeMemo(String text) {
-    Memo memo = Memo(id: UniqueKey().toString(), text: text, date: DateTime.timestamp().toString());
+    Memo memo = Memo(id: UniqueKey().toString(), text: text, date: DateTime.timestamp().toIso8601String());
     return memo;
   }
 
